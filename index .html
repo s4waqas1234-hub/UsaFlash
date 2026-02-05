@@ -18,7 +18,6 @@
         .auth-input { background: #1a1f29; border: 1px solid #2d3748; padding: 12px; border-radius: 8px; width: 100%; color: white; font-size: 14px; outline: none; }
         #appTerminal { display: none; height: 100dvh; flex-direction: column; padding: 8px; }
         .tab-btn.active { background: #2d3748; color: white; border-radius: 8px; }
-        /* Trade History Styling */
         .history-item { border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 0; }
     </style>
 </head>
@@ -73,7 +72,6 @@
 
         <main class="relative flex-grow rounded-2xl overflow-hidden border border-gray-800 bg-black mb-2">
             <div id="tv_chart" class="h-full w-full"></div>
-            <div id="statusBox" class="hidden absolute top-2 right-2 bg-yellow-500 text-black px-3 py-1 rounded-full text-[9px] font-black z-50 uppercase">Trade Active...</div>
         </main>
 
         <footer class="glass-card p-3 rounded-2xl">
@@ -85,9 +83,6 @@
                 <div class="bg-[#0f141e] px-4 py-2 rounded-xl border border-white/5">
                     <span class="text-[9px] text-gray-500 font-bold uppercase block mb-0.5">TIME</span>
                     <select id="duration" class="bg-transparent font-bold text-white w-full outline-none">
-                        <option value="5">5 Sec</option>
-                        <option value="15">15 Sec</option>
-                        <option value="30">30 Sec</option>
                         <option value="60">1 Min</option>
                         <option value="300">5 Min</option>
                     </select>
@@ -115,19 +110,17 @@
                         <button onclick="togglePassView()" class="text-yellow-500 text-[10px] font-bold uppercase">Show</button>
                     </div>
                 </div>
-                <button onclick="showTradeHistory()" class="w-full py-4 bg-white/5 border border-white/10 text-white font-bold rounded-xl text-xs uppercase flex items-center justify-center gap-2">
-                    📊 Trade History
-                </button>
+                <button onclick="showTradeHistory()" class="w-full py-4 bg-white/5 border border-white/10 text-white font-bold rounded-xl text-xs uppercase">📊 Trade History</button>
                 <button onclick="auth.signOut()" class="w-full py-4 bg-red-500/10 text-red-500 font-bold rounded-xl text-xs uppercase">Logout Account</button>
             </div>
-            <button onclick="hideM('settingsM')" class="mt-6 text-gray-500 text-[10px] font-bold uppercase block w-full text-center tracking-widest">Close Settings</button>
+            <button onclick="hideM('settingsM')" class="mt-6 text-gray-500 text-[10px] font-bold uppercase block w-full text-center">Close</button>
         </div>
     </div>
 
     <div id="historyM" class="modal">
         <div class="glass-card p-6 rounded-3xl w-[90%] max-w-sm border border-white/10 flex flex-col max-h-[80vh]">
             <h2 class="text-lg font-bold mb-4 uppercase text-yellow-500 text-center">Trade History</h2>
-            <div id="historyList" class="flex-grow overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+            <div id="historyList" class="flex-grow overflow-y-auto space-y-2">
                 <p class="text-center text-gray-500 text-xs py-10">No history found.</p>
             </div>
             <button onclick="hideM('historyM')" class="mt-4 text-gray-500 text-[10px] font-bold uppercase block w-full text-center">Back</button>
@@ -137,44 +130,30 @@
     <div id="depM" class="modal">
         <div class="glass-card p-6 rounded-3xl w-[90%] max-w-sm text-center border border-white/10">
             <div id="depStep0">
-                <h2 class="text-lg font-bold mb-4 uppercase text-yellow-500">Deposit Funds</h2>
-                <p class="text-[10px] text-gray-400 mb-4 font-bold uppercase">Enter Deposit Amount ($)</p>
-                <input type="number" id="depAmountInput" placeholder="Minimum $10" class="auth-input mb-4 text-center text-lg">
-                <button onclick="goToDepStep1()" class="w-full py-3 bg-yellow-500 text-black font-black rounded-xl text-xs uppercase">Next</button>
-                <button onclick="hideM('depM')" class="mt-4 text-gray-500 text-[10px] font-bold uppercase block w-full">Cancel</button>
+                <h2 class="text-lg font-bold mb-4 uppercase text-yellow-500">Deposit</h2>
+                <input type="number" id="depAmountInput" placeholder="Amount" class="auth-input mb-4 text-center">
+                <button onclick="goToDepStep1()" class="w-full py-3 bg-yellow-500 text-black font-black rounded-xl text-xs">Next</button>
             </div>
             <div id="depStep1" class="hidden">
-                <h2 class="text-lg font-bold mb-4 uppercase text-yellow-500">Send USDT (TRC20)</h2>
-                <div class="bg-white p-2 rounded-xl mb-4 w-40 mx-auto">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=TAaTmYha48Pbft4aJn1RGyKmVoQZKuLArM" alt="QR Code">
-                </div>
-                <div class="bg-black/50 p-3 rounded-xl mb-4 flex items-center justify-between">
-                    <code class="text-[10px] text-white truncate pr-2">TAaTmYha48Pbft4aJn1RGyKmVoQZKuLArM</code>
-                    <button onclick="copyAddr()" class="text-yellow-500 font-bold text-[10px] uppercase shrink-0">Copy</button>
-                </div>
-                <p class="text-xs mb-4 text-gray-300">Amount to pay: <span id="finalAmtShow" class="text-yellow-500 font-bold"></span></p>
-                <button onclick="showDepForm()" class="w-full py-3 bg-yellow-500 text-black font-black rounded-xl text-xs uppercase">I Have Paid</button>
-                <button onclick="resetDep()" class="mt-4 text-gray-500 text-[10px] font-bold uppercase block w-full">Back</button>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=TAaTmYha48Pbft4aJn1RGyKmVoQZKuLArM" class="mx-auto mb-4">
+                <p class="text-[10px] text-white break-all mb-4">TAaTmYha48Pbft4aJn1RGyKmVoQZKuLArM</p>
+                <button onclick="showDepForm()" class="w-full py-3 bg-yellow-500 text-black font-black rounded-xl text-xs">I Have Paid</button>
             </div>
-            <div id="depStep2" class="hidden text-left">
-                <h2 class="text-lg font-bold mb-4 uppercase text-center text-yellow-500">Submit Proof</h2>
-                <div class="space-y-3">
-                    <input type="text" id="userTg" placeholder="Telegram ID (@username)" class="auth-input">
-                    <input type="text" id="txid" placeholder="Transaction ID (TXID)" class="auth-input">
-                </div>
-                <button onclick="finalSubmitDeposit()" class="w-full py-3 bg-yellow-500 text-black font-black rounded-xl text-xs uppercase mt-4">Confirm Deposit</button>
+            <div id="depStep2" class="hidden">
+                <input type="text" id="userTg" placeholder="Telegram ID" class="auth-input mb-2">
+                <input type="text" id="txid" placeholder="TXID" class="auth-input mb-4">
+                <button onclick="finalSubmitDeposit()" class="w-full py-3 bg-yellow-500 text-black font-black rounded-xl text-xs">Confirm</button>
             </div>
+            <button onclick="hideM('depM')" class="mt-4 text-gray-500 text-[10px] font-bold uppercase block w-full">Cancel</button>
         </div>
     </div>
 
     <div id="witM" class="modal">
-        <div class="glass-card p-6 rounded-3xl w-[90%] max-w-sm text-center border border-white/10">
-            <h2 class="text-lg font-bold mb-4 uppercase text-yellow-500">Withdrawal</h2>
-            <div class="space-y-4 text-left">
-                <input type="number" id="witAmt" placeholder="Amount" class="auth-input">
-                <input type="text" id="witAddr" placeholder="USDT TRC20 Address" class="auth-input">
-                <button onclick="submitWithdraw()" class="w-full py-3 bg-white text-black font-black rounded-xl text-xs uppercase">Submit Request</button>
-            </div>
+        <div class="glass-card p-6 rounded-3xl w-[90%] max-w-sm border border-white/10 text-center">
+            <h2 class="text-lg font-bold mb-4 uppercase text-yellow-500">Withdraw</h2>
+            <input type="number" id="witAmt" placeholder="Amount" class="auth-input mb-2">
+            <input type="text" id="witAddr" placeholder="Address" class="auth-input mb-4">
+            <button onclick="submitWithdraw()" class="w-full py-3 bg-white text-black font-black rounded-xl text-xs">Submit</button>
             <button onclick="hideM('witM')" class="mt-4 text-gray-500 text-[10px] font-bold uppercase block w-full">Cancel</button>
         </div>
     </div>
@@ -196,7 +175,6 @@
         let userData = null;
         let chart, candlestickSeries;
 
-        // AUTH LOGIC
         function switchTab(t) {
             document.getElementById('loginTab').className = `tab-btn flex-1 py-2 text-sm font-bold ${t==='login'?'active':''}`;
             document.getElementById('regTab').className = `tab-btn flex-1 py-2 text-sm font-bold ${t==='reg'?'active':''}`;
@@ -212,9 +190,7 @@
                 if(isReg) {
                     const res = await auth.createUserWithEmailAndPassword(email, pass);
                     await db.collection('users').doc(res.user.uid).set({ email, balance: 0, password: pass });
-                } else {
-                    await auth.signInWithEmailAndPassword(email, pass);
-                }
+                } else { await auth.signInWithEmailAndPassword(email, pass); }
             } catch(e) { alert(e.message); }
         }
 
@@ -222,30 +198,20 @@
             if(user) {
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('appTerminal').style.display = 'flex';
-                initApp(user);
-            } else {
-                location.reload();
-            }
+                db.collection('users').doc(user.uid).onSnapshot(doc => {
+                    userData = doc.data();
+                    document.getElementById('balanceDisp').innerText = `$${userData.balance.toFixed(2)}`;
+                    document.getElementById('userInitial').innerText = userData.email[0].toUpperCase();
+                    document.getElementById('settingEmail').innerText = userData.email;
+                    document.getElementById('settingPass').value = userData.password;
+                });
+                initChart();
+            } else { document.getElementById('authSection').style.display = 'flex'; }
         });
 
-        function initApp(user) {
-            db.collection('users').doc(user.uid).onSnapshot(doc => {
-                userData = doc.data();
-                document.getElementById('balanceDisp').innerText = `$${userData.balance.toFixed(2)}`;
-                document.getElementById('userInitial').innerText = userData.email[0];
-                document.getElementById('settingEmail').innerText = userData.email;
-                document.getElementById('settingPass').value = userData.password;
-            });
-            initChart();
-        }
-
         function initChart() {
-            chart = LightweightCharts.createChart(document.getElementById('tv_chart'), {
-                layout: { background: { color: '#000000' }, textColor: '#555' },
-                grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
-                timeScale: { borderColor: '#111', timeVisible: true }
-            });
-            candlestickSeries = chart.addCandlestickSeries({ upColor: '#22c55e', downColor: '#ef4444', borderVisible: false, wickUpColor: '#22c55e', wickDownColor: '#ef4444' });
+            chart = LightweightCharts.createChart(document.getElementById('tv_chart'), { layout: { background: { color: '#000' }, textColor: '#555' }, grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } } });
+            candlestickSeries = chart.addCandlestickSeries({ upColor: '#22c55e', downColor: '#ef4444' });
             updateAsset("BINANCE:BTCUSDT");
         }
 
@@ -255,83 +221,59 @@
             candlestickSeries.setData(data.map(d => ({ time: d[0]/1000, open: parseFloat(d[1]), high: parseFloat(d[2]), low: parseFloat(d[3]), close: parseFloat(d[4]) })));
         }
 
-        // TRADING LOGIC (Updated to save history)
+        // TRADE LOGIC
         async function initTrade(type) {
             const amt = parseFloat(document.getElementById('tradeAmt').value);
             const dur = parseInt(document.getElementById('duration').value);
             const asset = document.getElementById('assetSelect').value;
-            
-            if(!userData || amt > userData.balance || amt <= 0) return alert("Invalid Amount or Insufficient Balance");
+            if(!userData || amt > userData.balance || amt <= 0) return alert("Invalid Amount");
 
-            const statusBox = document.getElementById('statusBox');
-            statusBox.classList.remove('hidden');
-            
-            // Update Balance
             await db.collection('users').doc(auth.currentUser.uid).update({ balance: userData.balance - amt });
-
-            // Save to Trade History
+            
+            // SAVE TO HISTORY
             await db.collection('trades').add({
                 uid: auth.currentUser.uid,
-                asset: asset,
+                asset: asset.split(':')[1],
                 amount: amt,
-                duration: dur,
-                type: type, // UP or DOWN
-                status: 'Closed',
+                type: type,
                 time: Date.now()
             });
 
-            setTimeout(() => {
-                statusBox.classList.add('hidden');
-                alert("Trade Finished!");
-            }, dur * 1000);
+            setTimeout(() => alert("Trade Finished!"), dur * 1000);
         }
 
-        // SHOW TRADE HISTORY
         async function showTradeHistory() {
             hideM('settingsM');
             showM('historyM');
             const list = document.getElementById('historyList');
-            list.innerHTML = '<p class="text-center text-gray-500 text-xs py-10">Fetching history...</p>';
-
-            try {
-                const snapshot = await db.collection('trades')
-                    .where('uid', '==', auth.currentUser.uid)
-                    .orderBy('time', 'desc')
-                    .limit(20)
-                    .get();
-
-                if (snapshot.empty) {
-                    list.innerHTML = '<p class="text-center text-gray-500 text-xs py-10">No recent trades.</p>';
-                    return;
-                }
-
-                list.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const trade = doc.data();
-                    const date = new Date(trade.time).toLocaleTimeString();
-                    const color = trade.type === 'UP' ? 'text-green-500' : 'text-red-500';
-                    
-                    list.innerHTML += `
-                        <div class="history-item flex justify-between items-center px-2">
-                            <div>
-                                <p class="text-xs font-bold text-white">${trade.asset.split(':')[1]}</p>
-                                <p class="text-[9px] text-gray-500">${date} | ${trade.duration}s</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-xs font-black ${color}">$${trade.amount.toFixed(2)} ${trade.type}</p>
-                                <p class="text-[9px] text-gray-400 uppercase italic">Result Pending</p>
-                            </div>
-                        </div>
-                    `;
-                });
-            } catch (e) {
-                list.innerHTML = `<p class="text-center text-red-500 text-xs py-10">Error: ${e.message}</p>`;
-            }
+            list.innerHTML = '<p class="text-center text-gray-500 text-xs py-10">Loading...</p>';
+            const snap = await db.collection('trades').where('uid', '==', auth.currentUser.uid).get();
+            if(snap.empty) { list.innerHTML = '<p class="text-center text-gray-500 text-xs py-10">No Trades</p>'; return; }
+            list.innerHTML = '';
+            snap.forEach(doc => {
+                const t = doc.data();
+                list.innerHTML += `<div class="history-item flex justify-between text-xs px-2"><span>${t.asset} (${t.type})</span><span class="${t.type=='UP'?'text-green-500':'text-red-500'}">$${t.amount}</span></div>`;
+            });
         }
 
-        // DEPOSIT / WITHDRAW / UTILS
-        function goToDepStep1() {
-            const amt = document.getElementById('depAmountInput').value;
-            if(amt < 10) return alert("Min deposit $10");
-            document.getElementById('finalAmtShow').innerText = `$${amt}`;
-            document.getElementById('dep
+        function goToDepStep1() { document.getElementById('depStep0').classList.add('hidden'); document.getElementById('depStep1').classList.remove('hidden'); }
+        function showDepForm() { document.getElementById('depStep1').classList.add('hidden'); document.getElementById('depStep2').classList.remove('hidden'); }
+        function resetDep() { document.getElementById('depStep0').classList.remove('hidden'); document.getElementById('depStep1').classList.add('hidden'); document.getElementById('depStep2').classList.add('hidden'); }
+        async function finalSubmitDeposit() {
+            const amt = parseFloat(document.getElementById('depAmountInput').value);
+            await db.collection('requests').add({ uid: auth.currentUser.uid, email: auth.currentUser.email, tg: document.getElementById('userTg').value, txid: document.getElementById('txid').value, amount: amt, status: 'pending', time: Date.now() });
+            alert("Submitted!"); hideM('depM');
+        }
+        async function submitWithdraw() {
+            const amt = parseFloat(document.getElementById('witAmt').value);
+            if(amt > userData.balance) return alert("Low Balance");
+            await db.collection('requests').add({ uid: auth.currentUser.uid, type: 'withdraw', amount: amt, address: document.getElementById('witAddr').value, status: 'pending' });
+            alert("Requested!"); hideM('witM');
+        }
+
+        function togglePassView() { const p = document.getElementById('settingPass'); p.type = p.type==="password"?"text":"password"; }
+        function showM(id) { document.getElementById(id).style.display = 'flex'; }
+        function hideM(id) { document.getElementById(id).style.display = 'none'; if(id==='depM') resetDep(); }
+    </script>
+</body>
+</html>

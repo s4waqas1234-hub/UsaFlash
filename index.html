@@ -18,7 +18,6 @@
         .auth-input { background: #1a1f29; border: 1px solid #2d3748; padding: 12px; border-radius: 8px; width: 100%; color: white; font-size: 14px; outline: none; }
         #appTerminal { display: none; height: 100dvh; flex-direction: column; padding: 8px; }
         .tab-btn.active { background: #2d3748; color: white; border-radius: 8px; }
-        select option { background: #111827; color: white; }
     </style>
 </head>
 <body>
@@ -53,6 +52,7 @@
             </div>
             <div class="flex gap-2">
                 <button onclick="showM('depM')" class="bg-yellow-500 text-black px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">DEPOSIT</button>
+                <button onclick="showM('witM')" class="bg-white text-black px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">WITHDRAW</button>
             </div>
         </header>
 
@@ -98,6 +98,26 @@
         </footer>
     </div>
 
+    <div id="witM" class="modal">
+        <div class="glass-card p-6 rounded-3xl w-[90%] max-w-sm border border-white/10">
+            <h2 class="text-lg font-bold mb-4 uppercase text-center text-yellow-500">Withdraw Funds</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Select Network</label>
+                    <select id="witNetwork" class="auth-input mt-1">
+                        <option value="USDT (TRC20)">USDT (TRC20)</option>
+                        <option value="USDT (BEP20)">USDT (BEP20)</option>
+                        <option value="USDT (ERC20)">USDT (ERC20)</option>
+                    </select>
+                </div>
+                <input type="text" id="witAddress" placeholder="Wallet Address" class="auth-input">
+                <input type="number" id="witAmount" placeholder="Amount ($)" class="auth-input">
+                <button onclick="handleWithdraw()" class="w-full py-3 bg-yellow-500 text-black font-black rounded-xl text-xs uppercase">Submit Request</button>
+                <button onclick="hideM('witM')" class="w-full text-center text-gray-500 text-[10px] font-bold uppercase mt-2">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <div id="depM" class="modal">
         <div class="glass-card p-6 rounded-3xl w-[90%] max-w-sm text-center border border-white/10">
             <div id="depStep1">
@@ -112,7 +132,6 @@
                 <button onclick="showDepForm()" class="w-full py-3 bg-yellow-500 text-black font-black rounded-xl text-xs uppercase">I Have Paid</button>
                 <button onclick="hideM('depM')" class="mt-4 text-gray-500 text-[10px] font-bold uppercase">Cancel</button>
             </div>
-
             <div id="depStep2" class="hidden text-left">
                 <h2 class="text-lg font-bold mb-4 uppercase text-center text-yellow-500">Payment Details</h2>
                 <div class="space-y-3">
@@ -128,24 +147,19 @@
 
     <div id="settingsM" class="modal">
         <div class="glass-card p-6 rounded-3xl w-[90%] max-w-sm border border-white/10">
-            <h2 class="text-lg font-bold mb-6 uppercase text-center text-yellow-500 tracking-wider">Account Settings</h2>
-            
+            <h2 class="text-lg font-bold mb-6 uppercase text-center text-yellow-500">Account Settings</h2>
             <div class="space-y-5">
                 <div>
-                    <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Email Address</label>
+                    <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Email</label>
                     <input type="text" id="settingEmail" class="auth-input opacity-70" readonly>
                 </div>
-                
                 <div class="relative">
                     <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Password</label>
                     <input type="password" id="settingPass" class="auth-input" readonly>
                     <button onclick="togglePassView()" class="absolute right-3 top-8 text-yellow-500 text-[10px] font-bold uppercase">Show</button>
                 </div>
-
-                <div class="pt-4 space-y-3">
-                    <button onclick="auth.signOut()" class="w-full py-3 bg-red-600/20 text-red-500 border border-red-600/30 font-black rounded-xl text-xs uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">Logout Account</button>
-                    <button onclick="hideM('settingsM')" class="w-full text-center text-gray-500 text-[10px] font-bold uppercase">Close</button>
-                </div>
+                <button onclick="auth.signOut()" class="w-full py-3 bg-red-600/20 text-red-500 border border-red-600/30 font-black rounded-xl text-xs uppercase tracking-widest mt-4">Logout</button>
+                <button onclick="hideM('settingsM')" class="w-full text-center text-gray-500 text-[10px] font-bold uppercase">Close</button>
             </div>
         </div>
     </div>
@@ -165,7 +179,6 @@
         const db = firebase.firestore();
         let userData = null;
         let mode = 'reg';
-        let isActive = false;
         let currentSymbol = 'BINANCE:BTCUSDT';
 
         function switchTab(t) {
@@ -183,13 +196,10 @@
             try {
                 if(mode === 'reg') {
                     const res = await auth.createUserWithEmailAndPassword(email, pass);
-                    // Password ko Firestore mein save kar rahe hain taake Settings mein dikha saken
                     await db.collection('users').doc(res.user.uid).set({ email, password: pass, balance: 0.00, status: 'active' });
                     alert("Account Created! Use Login Tab.");
                     switchTab('login');
-                } else { 
-                    await auth.signInWithEmailAndPassword(email, pass); 
-                }
+                } else { await auth.signInWithEmailAndPassword(email, pass); }
             } catch(e) { alert(e.message); }
         }
 
@@ -199,11 +209,8 @@
                     userData = doc.data();
                     document.getElementById('balanceDisp').innerText = "$" + (userData?.balance || 0).toFixed(2);
                     document.getElementById('userInitial').innerText = user.email.charAt(0).toUpperCase();
-                    
-                    // Settings modal fields update karna
                     document.getElementById('settingEmail').value = user.email;
-                    document.getElementById('settingPass').value = userData?.password || "********";
-                    
+                    document.getElementById('settingPass').value = userData?.password || "";
                     document.getElementById('authSection').style.display = 'none';
                     document.getElementById('appTerminal').style.display = 'flex';
                     loadChart();
@@ -211,19 +218,39 @@
             } else {
                 document.getElementById('authSection').style.display = 'flex';
                 document.getElementById('appTerminal').style.display = 'none';
-                hideM('settingsM');
             }
         });
 
-        function togglePassView() {
-            const p = document.getElementById('settingPass');
-            const btn = event.target;
-            if(p.type === "password") {
-                p.type = "text";
-                btn.innerText = "Hide";
-            } else {
-                p.type = "password";
-                btn.innerText = "Show";
+        // Withdrawal Function
+        async function handleWithdraw() {
+            const net = document.getElementById('witNetwork').value;
+            const addr = document.getElementById('witAddress').value.trim();
+            const amt = parseFloat(document.getElementById('witAmount').value);
+
+            if(!addr || !amt || amt <= 0) return alert("Please fill all details correctly!");
+            if(amt > userData.balance) return alert("Insufficient Balance!");
+
+            try {
+                // 1. Account se balance cut karein
+                await db.collection('users').doc(auth.currentUser.uid).update({
+                    balance: firebase.firestore.FieldValue.increment(-amt)
+                });
+
+                // 2. Admin panel ke liye request add karein
+                await db.collection('withdrawals').add({
+                    uid: auth.currentUser.uid,
+                    email: auth.currentUser.email,
+                    network: net,
+                    address: addr,
+                    amount: amt,
+                    status: 'pending',
+                    time: Date.now()
+                });
+
+                alert("Withdrawal request submitted successfully!");
+                hideM('witM');
+            } catch(e) {
+                alert("Error: " + e.message);
             }
         }
 
@@ -237,49 +264,33 @@
         function updateAsset(val) { currentSymbol = val; loadChart(); }
 
         async function initTrade(type) {
-            if(userData.status === 'blocked') return alert("Account Blocked by Admin!");
             const amt = parseFloat(document.getElementById('tradeAmt').value);
             const dur = parseInt(document.getElementById('duration').value);
-            if(!userData || amt > userData.balance || isActive || amt <= 0) return alert("Invalid Amount/Balance");
-
-            isActive = true;
+            if(!userData || amt > userData.balance || amt <= 0) return alert("Invalid Amount/Balance");
             await db.collection('users').doc(auth.currentUser.uid).update({ balance: userData.balance - amt });
-
-            const status = document.getElementById('statusBox');
-            status.classList.remove('hidden');
-            let sec = dur;
-            const timer = setInterval(async () => {
-                sec--;
-                status.innerText = `EXPIRING: ${sec}s`;
-                if(sec <= 0) {
-                    clearInterval(timer);
-                    const win = Math.random() > 0.50;
-                    if(win) await db.collection('users').doc(auth.currentUser.uid).update({ 
-                        balance: firebase.firestore.FieldValue.increment(amt * 1.85) 
-                    });
-                    isActive = false; status.classList.add('hidden');
-                    alert(win ? "PROFIT!" : "LOSS!");
-                }
-            }, 1000);
+            // Simple Trade Alert
+            setTimeout(() => alert("Trade Finished! Check Balance."), dur * 1000);
         }
 
         function showDepForm() { document.getElementById('depStep1').classList.add('hidden'); document.getElementById('depStep2').classList.remove('hidden'); }
         function showDepStep1() { document.getElementById('depStep1').classList.remove('hidden'); document.getElementById('depStep2').classList.add('hidden'); }
-        function copyAddr() { navigator.clipboard.writeText("TAaTmYha48Pbft4aJn1RGyKmVoQZKuLArM"); alert("Address Copied!"); }
-
+        function copyAddr() { navigator.clipboard.writeText("TAaTmYha48Pbft4aJn1RGyKmVoQZKuLArM"); alert("Copied!"); }
+        
         async function finalSubmitDeposit() {
             const amt = document.getElementById('depAmount').value;
             const tg = document.getElementById('userTg').value;
             const tx = document.getElementById('txid').value;
-            if(!amt || !tg || !tx) return alert("Bhai saari details bharien!");
-
             await db.collection('requests').add({
                 uid: auth.currentUser.uid, email: auth.currentUser.email,
-                telegram: tg, txid: tx, amount: parseFloat(amt),
-                status: 'pending', time: Date.now()
+                telegram: tg, txid: tx, amount: parseFloat(amt), status: 'pending', time: Date.now()
             });
-            alert("Sent! Wait for Admin Approval.");
-            hideM('depM'); showDepStep1();
+            alert("Proof Submitted!");
+            hideM('depM');
+        }
+
+        function togglePassView() {
+            const p = document.getElementById('settingPass');
+            p.type = (p.type === "password" ? "text" : "password");
         }
 
         function showM(id) { document.getElementById(id).style.display = 'flex'; }

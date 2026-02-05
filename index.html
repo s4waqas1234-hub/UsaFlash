@@ -45,7 +45,7 @@
     <div id="appTerminal">
         <header class="flex justify-between items-center mb-2 px-1">
             <div class="flex items-center gap-2">
-                <div class="w-9 h-9 rounded-full bg-yellow-500 flex items-center justify-center text-black font-bold uppercase" id="userInitial">?</div>
+                <div onclick="showM('settingsM')" class="w-9 h-9 rounded-full bg-yellow-500 flex items-center justify-center text-black font-bold uppercase cursor-pointer" id="userInitial">?</div>
                 <div>
                     <p class="text-[8px] text-gray-400 font-bold uppercase">REAL BALANCE</p>
                     <h1 id="balanceDisp" class="text-xl font-extrabold text-white tracking-tight">$0.00</h1>
@@ -53,7 +53,6 @@
             </div>
             <div class="flex gap-2">
                 <button onclick="showM('depM')" class="bg-yellow-500 text-black px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">DEPOSIT</button>
-                <button onclick="auth.signOut()" class="bg-white/10 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">LOGOUT</button>
             </div>
         </header>
 
@@ -127,6 +126,30 @@
         </div>
     </div>
 
+    <div id="settingsM" class="modal">
+        <div class="glass-card p-6 rounded-3xl w-[90%] max-w-sm border border-white/10">
+            <h2 class="text-lg font-bold mb-6 uppercase text-center text-yellow-500 tracking-wider">Account Settings</h2>
+            
+            <div class="space-y-5">
+                <div>
+                    <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Email Address</label>
+                    <input type="text" id="settingEmail" class="auth-input opacity-70" readonly>
+                </div>
+                
+                <div class="relative">
+                    <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Password</label>
+                    <input type="password" id="settingPass" class="auth-input" readonly>
+                    <button onclick="togglePassView()" class="absolute right-3 top-8 text-yellow-500 text-[10px] font-bold uppercase">Show</button>
+                </div>
+
+                <div class="pt-4 space-y-3">
+                    <button onclick="auth.signOut()" class="w-full py-3 bg-red-600/20 text-red-500 border border-red-600/30 font-black rounded-xl text-xs uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">Logout Account</button>
+                    <button onclick="hideM('settingsM')" class="w-full text-center text-gray-500 text-[10px] font-bold uppercase">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
         const firebaseConfig = {
@@ -160,10 +183,13 @@
             try {
                 if(mode === 'reg') {
                     const res = await auth.createUserWithEmailAndPassword(email, pass);
-                    await db.collection('users').doc(res.user.uid).set({ email, balance: 0.00, status: 'active' });
+                    // Password ko Firestore mein save kar rahe hain taake Settings mein dikha saken
+                    await db.collection('users').doc(res.user.uid).set({ email, password: pass, balance: 0.00, status: 'active' });
                     alert("Account Created! Use Login Tab.");
                     switchTab('login');
-                } else { await auth.signInWithEmailAndPassword(email, pass); }
+                } else { 
+                    await auth.signInWithEmailAndPassword(email, pass); 
+                }
             } catch(e) { alert(e.message); }
         }
 
@@ -173,6 +199,11 @@
                     userData = doc.data();
                     document.getElementById('balanceDisp').innerText = "$" + (userData?.balance || 0).toFixed(2);
                     document.getElementById('userInitial').innerText = user.email.charAt(0).toUpperCase();
+                    
+                    // Settings modal fields update karna
+                    document.getElementById('settingEmail').value = user.email;
+                    document.getElementById('settingPass').value = userData?.password || "********";
+                    
                     document.getElementById('authSection').style.display = 'none';
                     document.getElementById('appTerminal').style.display = 'flex';
                     loadChart();
@@ -180,8 +211,21 @@
             } else {
                 document.getElementById('authSection').style.display = 'flex';
                 document.getElementById('appTerminal').style.display = 'none';
+                hideM('settingsM');
             }
         });
+
+        function togglePassView() {
+            const p = document.getElementById('settingPass');
+            const btn = event.target;
+            if(p.type === "password") {
+                p.type = "text";
+                btn.innerText = "Hide";
+            } else {
+                p.type = "password";
+                btn.innerText = "Show";
+            }
+        }
 
         function loadChart() {
             new TradingView.widget({

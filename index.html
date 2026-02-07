@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ProTrade Global | Final Terminal</title>
+    <title>ProTrade Global | Live Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         body { background: #0b0e14; color: #e2e8f0; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; height: 100dvh; margin: 0; }
@@ -16,141 +17,123 @@
         .tab-btn { flex: 1; padding: 10px; font-size: 12px; font-weight: 700; border-radius: 10px; color: #848e9c; }
         .tab-btn.active { background: #3d4452; color: white; }
         #mainTerminal { display: none; height: 100dvh; flex-direction: column; padding: 8px; }
-        .glass-panel { background: rgba(17, 24, 39, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.05); }
         .btn-up { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); }
         .btn-down { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
     </style>
 </head>
 <body>
-
-<div id="authWrapper">
-    <div class="auth-card">
-        <div class="flex bg-[#0b0e14] p-1 rounded-xl mb-6">
-            <button id="tabLogin" onclick="setAuthMode('login')" class="tab-btn active">LOG IN</button>
-            <button id="tabReg" onclick="setAuthMode('reg')" class="tab-btn">SIGN UP</button>
+    <div id="authWrapper">
+        <div class="auth-card">
+            <div class="flex bg-[#0b0e14] p-1 rounded-xl mb-6">
+                <button id="tabLogin" onclick="setAuthMode('login')" class="tab-btn active">LOG IN</button>
+                <button id="tabReg" onclick="setAuthMode('reg')" class="tab-btn">SIGN UP</button>
+            </div>
+            <div id="regFields" style="display:none">
+                <div class="input-box"><label>Country</label><select id="authCountry"><option>India</option><option>Pakistan</option></select></div>
+            </div>
+            <div class="input-box"><label>Email</label><input type="email" id="authEmail" placeholder="Enter email"></div>
+            <div class="input-box"><label>Password</label><input type="password" id="authPass" placeholder="••••••••"></div>
+            <button onclick="executeAuth()" id="authSubmitBtn" class="w-full py-4 bg-yellow-500 text-black font-black rounded-xl uppercase text-xs">Login ➔</button>
         </div>
-        <div id="regFields" style="display:none;">
-            <div class="input-box"><label>Country</label><select id="regCountry"><option>India</option><option>Pakistan</option><option>UAE</option></select></div>
-        </div>
-        <div class="input-box"><label>Email</label><input id="authEmail" type="email"></div>
-        <div class="input-box"><label>Password</label><input id="authPass" type="password"></div>
-        <button id="authBtn" onclick="executeAuth()" class="w-full py-4 bg-yellow-500 text-black font-black rounded-xl">LOGIN ➜</button>
     </div>
-</div>
 
-<div id="mainTerminal">
-    <header class="flex justify-between items-center mb-3 px-1">
-        <div class="flex items-center gap-3">
-            <div id="profileIco" class="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center text-black font-black">U</div>
-            <div><p class="text-[8px] text-gray-500 font-bold uppercase">Live Wallet</p><h1 id="balanceText" class="text-xl font-extrabold">$0.00</h1></div>
-        </div>
-        <div class="flex gap-2">
-            <button class="bg-yellow-500 px-4 py-2 rounded-xl text-xs font-black">DEPOSIT</button>
-            <button class="bg-white/10 px-4 py-2 rounded-xl text-xs font-black">WITHDRAW</button>
-        </div>
-    </header>
-    <main class="flex-grow bg-black rounded-2xl overflow-hidden"><div id="chartContainer" class="h-full"></div></main>
-    <footer class="glass-panel p-4 rounded-3xl mt-2">
-        <div class="grid grid-cols-2 gap-4 mb-4">
-            <input id="invAmount" type="number" value="100" class="bg-black/30 rounded-xl p-3 font-black text-white">
-            <select id="invTime" class="bg-black/30 rounded-xl p-3 font-black text-white">
-                <option value="5">5 Sec</option><option value="15">15 Sec</option><option value="60">1 Min</option>
-            </select>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-            <button onclick="startTrade('UP')" class="btn-up h-14 rounded-xl font-black">CALL</button>
-            <button onclick="startTrade('DOWN')" class="btn-down h-14 rounded-xl font-black">PUT</button>
-        </div>
-    </footer>
-</div>
+    <div id="mainTerminal">
+        <header class="flex justify-between items-center mb-3 px-1">
+            <div class="flex items-center gap-3">
+                <div id="profileIco" class="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center text-black font-black">U</div>
+                <div><p class="text-[8px] text-gray-500 font-bold uppercase">Live Wallet</p><h1 id="balanceText" class="text-xl font-extrabold text-white">$0.00</h1></div>
+            </div>
+            <button onclick="location.reload()" class="text-xs text-gray-500 font-bold underline">LOGOUT</button>
+        </header>
+        <main class="relative flex-grow rounded-[30px] overflow-hidden border border-white/5 bg-black mb-3">
+            <div id="chartContainer" class="h-full w-full"></div>
+            <div id="tradeTimer" class="hidden absolute bottom-6 right-6 bg-yellow-500 text-black px-5 py-2 rounded-full font-black text-sm z-50">⏱ <span id="clock">00:00</span></div>
+        </main>
+        <footer class="p-4 rounded-[32px] bg-[#1c222d]">
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="bg-black/40 px-5 py-3 rounded-2xl"><span class="text-[9px] text-gray-500 block mb-1">Amount</span><input id="invAmount" type="number" value="100" class="bg-transparent outline-none font-black text-white w-full"></div>
+                <div class="bg-black/40 px-5 py-3 rounded-2xl"><span class="text-[9px] text-gray-500 block mb-1">Time</span><select id="invTime" class="bg-transparent font-black text-sm text-white w-full"><option value="5">5 Sec</option><option value="60">1 Min</option></select></div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="startTrade('UP')" class="btn-up h-16 rounded-2xl font-black text-white">CALL</button>
+                <button onclick="startTrade('DOWN')" class="btn-down h-16 rounded-2xl font-black text-white">PUT</button>
+            </div>
+        </footer>
+    </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://s3.tradingview.com/tv.js"></script>
+    <script src="https://s3.tradingview.com/tv.js"></script>
+    <script>
+        const SB_URL = 'https://yeoetblketgwpsudnvhr.supabase.co'; 
+        const SB_KEY = 'sb_publishable_sgL37oN4LMWE2_ln9X6hYQ_DzkggigP';
+        const supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
-<script>
-// Yahan apni Firebase Config paste karen
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_ID",
-  appId: "YOUR_APP_ID"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
+        let user = null;
+        let authMode = 'login';
+        let isTrading = false;
 
-let currentUser = null;
-let authMode = 'login';
-
-function setAuthMode(m){
-    authMode=m;
-    document.getElementById('regFields').style.display=m==='reg'?'block':'none';
-    document.getElementById('tabLogin').className = m==='login'?'tab-btn active':'tab-btn';
-    document.getElementById('tabReg').className = m==='reg'?'tab-btn active':'tab-btn';
-    document.getElementById('authBtn').innerText = m==='login'?'LOGIN ➜':'SIGN UP ➜';
-}
-
-async function executeAuth(){
-    const e = authEmail.value, p = authPass.value;
-    if(!e || !p) return alert("Fill details");
-
-    try {
-        if(authMode === 'reg'){
-            const res = await auth.createUserWithEmailAndPassword(e, p);
-            await db.collection("users").doc(res.user.uid).set({
-                email: e, balance: 3000, tradeControl: "normal", country: regCountry.value, uid: res.user.uid
-            });
-            alert("Account Created!");
-            location.reload();
-        } else {
-            const res = await auth.signInWithEmailAndPassword(e, p);
-            loadUserData(res.user.uid);
+        function setAuthMode(m) {
+            authMode = m;
+            document.getElementById('tabLogin').classList.toggle('active', m === 'login');
+            document.getElementById('tabReg').classList.toggle('active', m === 'reg');
+            document.getElementById('regFields').style.display = m === 'reg' ? 'block' : 'none';
+            document.getElementById('authSubmitBtn').innerText = m === 'reg' ? 'Create Account ➔' : 'Log In ➔';
         }
-    } catch(err) { alert(err.message); }
-}
 
-function loadUserData(uid){
-    db.collection("users").doc(uid).onSnapshot(doc => {
-        currentUser = doc.data();
-        balanceText.innerText = "$" + currentUser.balance.toFixed(2);
-        profileIco.innerText = currentUser.email[0].toUpperCase();
-        authWrapper.style.display = 'none';
-        mainTerminal.style.display = 'flex';
-        if(!window.tvWidget) loadChart();
-    });
-}
-
-function loadChart(){
-    window.tvWidget = new TradingView.widget({autosize:true,symbol:"BINANCE:BTCUSDT",interval:"1",theme:"dark",container_id:"chartContainer"});
-}
-
-async function startTrade(dir){
-    const amt = parseFloat(invAmount.value);
-    const time = parseInt(invTime.value);
-    if(amt > currentUser.balance) return alert("Low Balance");
-
-    // Initial deduction
-    await db.collection("users").doc(currentUser.uid).update({ balance: currentUser.balance - amt });
-
-    setTimeout(async () => {
-        let win;
-        if(currentUser.tradeControl === "win") win = true;
-        else if(currentUser.tradeControl === "loss") win = false;
-        else win = Math.random() > 0.5;
-
-        if(win){
-            const profit = amt * 1.85;
-            await db.collection("users").doc(currentUser.uid).update({ balance: firebase.firestore.FieldValue.increment(profit) });
-            alert("WIN! +$" + (profit - amt).toFixed(2));
-        } else {
-            alert("LOSS!");
+        async function executeAuth() {
+            const email = document.getElementById('authEmail').value.trim();
+            const pass = document.getElementById('authPass').value.trim();
+            if(authMode === 'reg') {
+                const tid = Math.floor(100000 + Math.random() * 900000);
+                const { error } = await supabase.from('profiles').insert([{ email, password: pass, tid, balance: 3000 }]);
+                if(error) alert("Error: Account exists!"); else { alert("Registered! Please Login."); setAuthMode('login'); }
+            } else {
+                const { data } = await supabase.from('profiles').select('*').eq('email', email).eq('password', pass).single();
+                if(data) {
+                    if(data.is_blocked) return alert("ACCOUNT BLOCKED BY ADMIN!");
+                    user = data;
+                    document.getElementById('authWrapper').style.display = 'none';
+                    document.getElementById('mainTerminal').style.display = 'flex';
+                    syncUI(); loadChart();
+                } else alert("Invalid Login");
+            }
         }
-    }, time * 1000);
-}
-</script>
+
+        async function syncUI() {
+            const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+            if(data) {
+                user = data;
+                document.getElementById('balanceText').innerText = "$" + parseFloat(user.balance).toFixed(2);
+                document.getElementById('profileIco').innerText = user.email[0].toUpperCase();
+            }
+        }
+
+        function loadChart() { new TradingView.widget({ "autosize": true, "symbol": "BINANCE:BTCUSDT", "interval": "1", "theme": "dark", "container_id": "chartContainer", "hide_top_toolbar": true, "backgroundColor": "#0b0e14" }); }
+
+        async function startTrade(type) {
+            const amt = parseFloat(document.getElementById('invAmount').value);
+            if(amt > user.balance || isTrading || amt <= 0) return alert("Check Balance");
+            isTrading = true;
+            await supabase.from('profiles').update({ balance: user.balance - amt }).eq('id', user.id);
+            syncUI();
+            let time = parseInt(document.getElementById('invTime').value);
+            document.getElementById('tradeTimer').classList.remove('hidden');
+            const itv = setInterval(async () => {
+                time--;
+                document.getElementById('clock').innerText = `00:${time < 10 ? '0'+time : time}`;
+                if(time <= 0) {
+                    clearInterval(itv);
+                    document.getElementById('tradeTimer').classList.add('hidden');
+                    isTrading = false;
+                    let win = user.trade_control === 'win' ? true : (user.trade_control === 'loss' ? false : Math.random() > 0.5);
+                    if(win) {
+                        const profit = amt * 1.82;
+                        await supabase.from('profiles').update({ balance: user.balance + profit }).eq('id', user.id);
+                        alert("WIN! +$" + profit.toFixed(2));
+                    } else alert("LOSS!");
+                    syncUI();
+                }
+            }, 1000);
+        }
+    </script>
 </body>
 </html>

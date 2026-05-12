@@ -15,7 +15,8 @@
         .stat-card { background: linear-gradient(135deg, #111827 0%, #030712 100%); border: 1px solid rgba(59, 130, 246, 0.1); padding: 20px; border-radius: 24px; text-align: center; }
         .auth-input { background: #1a1f29; border: 1px solid #2d3748; padding: 14px; border-radius: 12px; width: 100%; color: white; outline: none; }
         #appTerminal { display: none; min-height: 100vh; flex-direction: column; padding: 15px; }
-        .btn-blue { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+        .btn-blue { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); transition: all 0.3s ease; }
+        .btn-blue:active { transform: scale(0.95); }
         #loadingScreen { position: fixed; inset: 0; background: #05070a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .loader-spin { width: 40px; height: 40px; border: 4px solid #1a1f29; border-top: 4px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -25,19 +26,19 @@
 
     <div id="loadingScreen">
         <div class="loader-spin"></div>
-        <p class="mt-4 text-[10px] font-bold text-blue-500 uppercase tracking-widest italic text-center">Finalizing Affiliate System...</p>
+        <p class="mt-4 text-[10px] font-bold text-blue-500 uppercase tracking-widest italic">Dubai Live Trade Affiliate...</p>
     </div>
 
     <div id="authSection" class="min-h-screen flex items-center justify-center p-4" style="display:none;">
         <div class="glass-card w-full max-w-sm p-8 rounded-[32px]">
             <h1 class="text-3xl font-black text-center mb-8 uppercase italic text-blue-500">Affiliate</h1>
             <div class="flex bg-black/40 p-1.5 rounded-2xl mb-8">
-                <button onclick="switchAuth('login')" id="loginTab" class="flex-1 py-3 text-sm font-bold bg-[#2d3748] rounded-xl">Login</button>
-                <button onclick="switchAuth('reg')" id="regTab" class="flex-1 py-3 text-sm font-bold">Registration</button>
+                <button onclick="switchAuth('login')" id="loginTab" class="flex-1 py-3 text-sm font-bold">Login</button>
+                <button onclick="switchAuth('reg')" id="regTab" class="flex-1 py-3 text-sm font-bold bg-[#2d3748] rounded-xl">Registration</button>
             </div>
             <input type="email" id="userEmail" placeholder="Email" class="auth-input mb-4">
             <input type="password" id="userPass" placeholder="Password" class="auth-input mb-6">
-            <button onclick="handleAuth()" id="authBtn" class="w-full py-4 btn-blue text-white font-black rounded-2xl uppercase">Login</button>
+            <button onclick="handleAuth()" id="authBtn" class="w-full py-4 btn-blue text-white font-black rounded-2xl uppercase">Registration</button>
         </div>
     </div>
 
@@ -71,18 +72,18 @@
             </div>
 
             <div class="glass-card p-6 rounded-[28px] text-center border border-blue-500/20">
-                <button onclick="generateLink()" class="w-full py-4 btn-blue text-white font-black rounded-2xl uppercase text-xs mb-4">Get My Affiliate Link</button>
+                <button onclick="generateLink()" class="w-full py-4 btn-blue text-white font-black rounded-2xl uppercase text-xs mb-4">Generate Unique Link</button>
                 <div id="linkBox" class="hidden">
-                    <p class="text-[9px] text-gray-500 font-bold uppercase mb-2">Unique ID: <span id="affIDDisp" class="text-blue-400 font-black"></span></p>
+                    <p class="text-[9px] text-gray-500 font-bold uppercase mb-2">Copy your link below:</p>
                     <div class="bg-black/60 p-3 rounded-xl flex items-center gap-3">
-                        <input id="affLinkInput" type="text" readonly class="bg-transparent text-[10px] text-blue-400 font-bold flex-grow outline-none overflow-hidden">
-                        <button onclick="copyLink()" class="text-[10px] text-white font-black uppercase bg-blue-600 px-3 py-1 rounded-lg">Copy</button>
+                        <input id="affLinkInput" type="text" readonly class="bg-transparent text-[10px] text-blue-400 font-bold flex-grow outline-none overflow-hidden" value="">
+                        <button onclick="copyLink()" class="text-[10px] text-white font-black uppercase">Copy</button>
                     </div>
                 </div>
             </div>
 
             <div class="glass-card p-6 rounded-[28px]">
-                <h3 class="text-[10px] font-black text-gray-500 uppercase mb-4 tracking-widest">Referral History</h3>
+                <h3 class="text-[10px] font-black text-gray-500 uppercase mb-4">Referral Users & Deposits</h3>
                 <div id="userList" class="space-y-3">
                     <p class="text-xs text-gray-600 italic">No activity yet...</p>
                 </div>
@@ -94,47 +95,34 @@
         const firebaseConfig = { apiKey: "AIzaSyAySRA1YSpTpmC8WjnKmDhnNMHkEmkeP50", authDomain: "waqas-47f30.firebaseapp.com", projectId: "waqas-47f30", storageBucket: "waqas-47f30.appspot.com", messagingSenderId: "374104279093", appId: "1:374104279093:web:6e1844b60456c700940364" };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(), db = firebase.firestore();
-        let mode = 'login'; 
+        let mode = 'reg';
 
-        // 1. Numeric ID capture from URL
+        // 1. Referral Capture Logic
         const urlParams = new URLSearchParams(window.location.search);
-        const refParam = urlParams.get('ref');
-        if(refParam) {
-            localStorage.setItem('activeRef', refParam);
-            // Click update logic by Short ID
-            db.collection('affiliateStats').where('shortID', '==', refParam).get().then(snap => {
-                snap.forEach(doc => {
-                    db.collection('affiliateStats').doc(doc.id).update({
-                        clicks: firebase.firestore.FieldValue.increment(1)
-                    });
-                });
-            });
+        const refID = urlParams.get('ref');
+        if(refID) {
+            localStorage.setItem('activeRef', refID);
+            db.collection('affiliateStats').doc(refID).set({
+                clicks: firebase.firestore.FieldValue.increment(1)
+            }, { merge: true });
         }
 
-        auth.onAuthStateChanged(async (user) => {
+        auth.onAuthStateChanged(user => {
             document.getElementById('loadingScreen').style.display = 'none';
             if(user) {
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('appTerminal').style.display = 'flex';
-                
-                // Ensure every user has a Short ID
-                const userRef = db.collection('affiliateStats').doc(user.uid);
-                const doc = await userRef.get();
-                if(!doc.exists) {
-                    const newShortID = Math.floor(100000 + Math.random() * 900000).toString();
-                    await userRef.set({ shortID: newShortID, clicks: 0, registrations: 0, totalDeposit: 0 });
-                }
-                
-                loadDashboard(user);
+                loadStats(user);
             } else {
                 document.getElementById('authSection').style.display = 'flex';
                 document.getElementById('appTerminal').style.display = 'none';
             }
         });
 
-        function loadDashboard(user) {
+        async function loadStats(user) {
             document.getElementById('userEmailDisp').innerText = user.email;
             
+            // Live Stats (Clicks, Users, Total Deposit)
             db.collection('affiliateStats').doc(user.uid).onSnapshot(doc => {
                 if(doc.exists) {
                     const data = doc.data();
@@ -142,30 +130,37 @@
                     document.getElementById('statClicks').innerText = data.clicks || 0;
                     document.getElementById('statUsers').innerText = data.registrations || 0;
                     document.getElementById('statDepAmt').innerText = "$" + totalDep.toFixed(2);
+                    // 40% Commission Calculation
                     document.getElementById('statCommission').innerText = "$" + (totalDep * 0.40).toFixed(2);
-                    
-                    // Show ONLY numeric link
-                    document.getElementById('affIDDisp').innerText = data.shortID;
-                    document.getElementById('affLinkInput').value = "https://dubailivetrade.online/?ref=" + data.shortID;
                 }
             });
 
-            // List of users who joined with this affiliate's shortID
-            db.collection('affiliateStats').doc(user.uid).get().then(doc => {
-                const sID = doc.data().shortID;
-                db.collection('users').where('referredBy', '==', sID).onSnapshot(snap => {
-                    const list = document.getElementById('userList');
-                    list.innerHTML = "";
-                    if(snap.empty) list.innerHTML = `<p class="text-xs text-gray-600 italic">No registrations.</p>`;
-                    snap.forEach(d => {
-                        const u = d.data();
-                        list.innerHTML += `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+            // Reffered Users List
+            db.collection('users').where('referredBy', '==', user.uid).onSnapshot(snap => {
+                const list = document.getElementById('userList');
+                list.innerHTML = "";
+                if(snap.empty) {
+                    list.innerHTML = `<p class="text-xs text-gray-600 italic">No referrals found.</p>`;
+                    return;
+                }
+                snap.forEach(doc => {
+                    const u = doc.data();
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
                             <span class="text-[10px] font-bold">${u.email}</span>
                             <span class="text-[10px] font-black text-green-500">$${(u.totalDeposited || 0).toFixed(2)}</span>
                         </div>`;
-                    });
                 });
             });
+        }
+
+        function generateLink() {
+            const user = auth.currentUser;
+            if(user) {
+                const link = "https://dubailivetrade.online/?ref=" + user.uid;
+                document.getElementById('affLinkInput').value = link;
+                document.getElementById('linkBox').classList.remove('hidden');
+            }
         }
 
         async function handleAuth() {
@@ -173,36 +168,17 @@
             try {
                 if(mode === 'reg') {
                     const r = await auth.createUserWithEmailAndPassword(e, p);
-                    const shortID = Math.floor(100000 + Math.random() * 900000).toString();
-                    const ref = localStorage.getItem('activeRef') || "direct";
-
+                    const referrer = localStorage.getItem('activeRef') || "direct";
                     await db.collection('users').doc(r.user.uid).set({
-                        email: e, balance: 0, referredBy: ref, totalDeposited: 0
+                        email: e, balance: 0, referredBy: referrer, totalDeposited: 0, tradeMode: 'normal'
                     });
-
-                    await db.collection('affiliateStats').doc(r.user.uid).set({
-                        shortID: shortID, clicks: 0, registrations: 0, totalDeposit: 0
-                    });
-
-                    if(ref !== "direct") {
-                        db.collection('affiliateStats').where('shortID', '==', ref).get().then(snap => {
-                            snap.forEach(doc => {
-                                db.collection('affiliateStats').doc(doc.id).update({
-                                    registrations: firebase.firestore.FieldValue.increment(1)
-                                });
-                            });
-                        });
+                    if(referrer !== "direct") {
+                        await db.collection('affiliateStats').doc(referrer).set({
+                            registrations: firebase.firestore.FieldValue.increment(1)
+                        }, { merge: true });
                     }
                 } else { await auth.signInWithEmailAndPassword(e, p); }
             } catch(err) { alert(err.message); }
-        }
-
-        function generateLink() { document.getElementById('linkBox').classList.remove('hidden'); }
-        function copyLink() {
-            const input = document.getElementById('affLinkInput');
-            input.select();
-            document.execCommand('copy');
-            alert("Numeric Link Copied!");
         }
 
         function switchAuth(t) {
@@ -210,6 +186,13 @@
             document.getElementById('loginTab').className = t==='login' ? 'flex-1 py-3 text-sm font-bold bg-[#2d3748] rounded-xl' : 'flex-1 py-3 text-sm font-bold';
             document.getElementById('regTab').className = t==='reg' ? 'flex-1 py-3 text-sm font-bold bg-[#2d3748] rounded-xl' : 'flex-1 py-3 text-sm font-bold';
             document.getElementById('authBtn').innerText = t==='login' ? 'Login' : 'Registration';
+        }
+
+        function copyLink() {
+            const linkInput = document.getElementById('affLinkInput');
+            linkInput.select();
+            document.execCommand('copy');
+            alert("Link Copied! Apne doston ke sath share karein.");
         }
     </script>
 </body>
